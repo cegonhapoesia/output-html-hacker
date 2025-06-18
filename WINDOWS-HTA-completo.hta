@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mini PC HTA - Completo</title>
+    <HTA:APPLICATION 
+        ID="MiniPC" 
+        APPLICATIONNAME="Mini PC" 
+        BORDER="thin" 
+        BORDERSTYLE="normal" 
+        CAPTION="yes" 
+        MAXIMIZEBUTTON="yes" 
+        MINIMIZEBUTTON="yes" 
+        SHOWINTASKBAR="yes" 
+        SINGLEINSTANCE="yes" 
+        SYSMENU="yes" 
+        WINDOWSTATE="normal" 
+    />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .panel {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
+    </style>
+    <script language="VBScript">
+        ' Função para executar comandos PowerShell
+        Sub RunPowerShell(command)
+            On Error Resume Next
+            Set objShell = CreateObject("WScript.Shell")
+            Set objExec = objShell.Exec("powershell.exe -Command """ & command & """")
+            Do While objExec.Status = 0
+                WScript.Sleep(100)
+            Loop
+            output = objExec.StdOut.ReadAll()
+            document.getElementById("output").value = output
+            If Err.Number <> 0 Then
+                document.getElementById("output").value = "Erro: " & Err.Description
+                Err.Clear
+            End If
+        End Sub
+
+        ' Função para abrir o PowerShell como administrador
+        Sub OpenPowerShellAdmin()
+            On Error Resume Next
+            Set objShell = CreateObject("Shell.Application")
+            objShell.ShellExecute "powershell.exe", "", "", "runas", 1
+            If Err.Number <> 0 Then
+                MsgBox "Erro ao tentar abrir o PowerShell como administrador: " & Err.Description, vbCritical
+                Err.Clear
+            End If
+        End Sub
+
+        ' Funções adicionais do sistema
+        Sub InstallDrivers()
+            RunPowerShell "pnputil /add-driver ""C:\Drivers\*.inf"" /install"
+        End Sub
+        Sub EnableDefender()
+            RunPowerShell "Set-MpPreference -DisableRealtimeMonitoring $false"
+        End Sub
+        Sub RepairSystem()
+            RunPowerShell "sfc /scannow"
+        End Sub
+        Sub AddToStartup()
+            On Error Resume Next
+            Set objShell = CreateObject("WScript.Shell")
+            startupPath = objShell.SpecialFolders("Startup") & "\MiniPC.hta"
+            Set objFSO = CreateObject("Scripting.FileSystemObject")
+            objFSO.CopyFile window.location.pathname, startupPath
+            If Err.Number = 0 Then
+                MsgBox "Adicionado à inicialização com sucesso!", vbInformation
+            Else
+                MsgBox "Erro: " & Err.Description, vbCritical
+                Err.Clear
+            End If
+        End Sub
+
+        ' Controle de volume
+        Sub SetVolume(level)
+            RunPowerShell "$wshell = New-Object -ComObject wscript.shell; for($i=0; $i -lt " & level & "; $i++) { $wshell.SendKeys([char]175) }"
+        End Sub
+
+        ' Monitoramento de hardware
+        Sub MonitorHardware()
+            RunPowerShell "Get-Counter '\Processor(_Total)\% Processor Time' | Select-Object -ExpandProperty CounterSamples | Select-Object -ExpandProperty CookedValue"
+            cpuUsage = document.getElementById("output").value
+            RunPowerShell "Get-Counter '\Memory\% Committed Bytes In Use' | Select-Object -ExpandProperty CounterSamples | Select-Object -ExpandProperty CookedValue"
+            ramUsage = document.getElementById("output").value
+            document.getElementById("hardwareInfo").innerHTML = "CPU: " & Round(cpuUsage) & "% | RAM: " & Round(ramUsage) & "%"
+        End Sub
+
+        ' Listagem e gerenciamento de processos
+        Sub ListProcesses()
+            RunPowerShell "Get-Process | Select-Object Name, CPU, Id | ConvertTo-Html -Fragment"
+            document.getElementById("processList").innerHTML = document.getElementById("output").value
+        End Sub
+        Sub KillProcess()
+            pid = document.getElementById("pid").value
+            If pid <> "" Then
+                RunPowerShell "Stop-Process -Id " & pid & " -Force"
+            Else
+                MsgBox "Digite um ID de processo válido.", vbExclamation
+            End If
+        End Sub
+
+        ' Verificar IP e conexões
+        Sub CheckIP()
+            RunPowerShell "Test-NetConnection -ComputerName google.com -InformationLevel Detailed | Select-Object -Property ComputerName, PingSucceeded, RemoteAddress | ConvertTo-Html -Fragment"
+            document.getElementById("networkInfo").innerHTML = document.getElementById("output").value
+        End Sub
+
+        ' Pesquisa em navegadores modernos
+        Sub openSearchWindow()
+            Dim query, choice, url
+            query = InputBox("Digite o termo de pesquisa:")
+            If query <> "" Then
+                choice = MsgBox("Pesquisar no Google? Clique em 'Sim'. Para Bing, clique em 'Não'.", vbYesNo + vbQuestion)
+                If choice = vbYes Then
+                    url = "https://www.google.com/search?q=" & query
+                Else
+                    url = "https://www.bing.com/search?q=" & query
+                End If
+                Set objShell = CreateObject("WScript.Shell")
+                objShell.Run "mshta.exe """ & url & """"
+            Else
+                MsgBox "Pesquisa cancelada.", vbInformation
+            End If
+        End Sub
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h2>Controle do Sistema</h2>
+            <button onclick="InstallDrivers">Instalar Drivers</button>
+            <button onclick="EnableDefender">Ativar Windows Defender</button>
+            <button onclick="RepairSystem">Reparar Sistema</button>
+            <button onclick="AddToStartup">Adicionar à Inicialização</button>
+            <button onclick="OpenPowerShellAdmin">Abrir PowerShell como Administrador</button>
+        </div>
+
+        <div class="panel">
+            <h2>Monitoramento de Hardware</h2>
+            <div id="hardwareInfo">Carregando...</div>
+            <button onclick="MonitorHardware">Atualizar</button>
+        </div>
+
+        <div class="panel">
+            <h2>Gerenciador de Processos</h2>
+            <button onclick="ListProcesses">Listar Processos</button>
+            <div id="processList"></div>
+            <input type="text" id="pid" placeholder="ID do Processo" />
+            <button onclick="KillProcess">Encerrar Processo</button>
+        </div>
+
+        <div class="panel">
+            <h2>Ferramentas de Rede</h2>
+            <button onclick="CheckIP">Verificar Conexão</button>
+            <div id="networkInfo"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Pesquisa</h2>
+            <button onclick="openSearchWindow()">Nova Janela de Pesquisa</button>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
