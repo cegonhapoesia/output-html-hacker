@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PenTest Database Search</title>
+    <HTA:APPLICATION 
+        ID="PenTestApp"
+        APPLICATIONNAME="PenTest Database Search"
+        BORDER="thin"
+        BORDERSTYLE="normal"
+        CAPTION="yes"
+        SHOWINTASKBAR="yes"
+        SINGLEINSTANCE="yes"
+        SYSMENU="yes">
+    <script type="text/javascript">
+        function pentestDatabaseSearch() {
+            var apiUrl = document.getElementById("apiUrl").value;
+            var query = document.getElementById("query").value;
+
+            if (!apiUrl || !query) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            // Construir URL com query
+            var fullUrl = apiUrl + "?query=" + encodeURIComponent(query);
+
+            // Abrir em nova janela ou guia
+            window.open(fullUrl, "_blank");
+        }
+    </script>
+</head>
+<body>
+    <h1>PenTest Database Search</h1>
+    <label for="apiUrl">API URL:</label>
+    <input type="text" id="apiUrl" size="50" placeholder="Ex: https://api.exemplo.com/search"><br><br>
+
+    <label for="query">Query:</label>
+    <input type="text" id="query" size="50" placeholder="Ex: SELECT * FROM users"><br><br>
+
+    <button onclick="pentestDatabaseSearch()">Executar</button>
+</body>
+</html>
