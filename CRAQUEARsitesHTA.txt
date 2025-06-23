@@ -1,0 +1,28 @@
+<h1>CRAQUEAR QUALQUER SITE EM HTA<br>
+
+INSERIR ESTA APLICAÇAO NO SITE PROGRAMAÇAO<br>
+
+salvar em .hta</h1>
+
+
+<meta charset="utf-8">
+
+<title>PenTest Database Search</title>
+
+    <HTA:APPLICATION 
+
+        ID="PenTestApp"
+
+        APPLICATIONNAME="PenTest Database Search"
+
+        BORDER="thin"
+
+        BORDERSTYLE="normal"
+
+        CAPTION="yes"
+
+        SHOWINTASKBAR="yes"
+
+        SINGLEINSTANCE="yes"
+
+        SYSMENU="yes">
